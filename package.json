@@ -1,12 +1,13 @@
 {
-  "name": "next-app",
+  "name": "newcsmintel",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "deploy": "next build && wrangler deploy"
   },
   "dependencies": {
     "next": "16.2.7",
