@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Didask · CSM Intelligence</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :root {
+    --peach: #f9b494; --peach-h: #f49272;
+    --ink: #111318; --ink60: rgba(17,19,24,.6); --ink10: rgba(17,19,24,.06);
+    --slate: #8892a4; --line: #e5e9f0; --bg: #f2f4f8; --white: #fff;
+    --green: #16a34a; --green-bg: #dcfce7;
+    --red: #dc2626;   --red-bg: #fee2e2;
+    --amber: #d97706; --amber-bg: #fef3c7;
+    --blue: #2563eb;  --blue-bg: #dbeafe;
+    --purple: #7c3aed;--purple-bg: #ede9fe;
+  }
+  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--ink); overflow-x:hidden; -webkit-font-smoothing:antialiased; }
+  .mono { font-family:'DM Mono',monospace; }
+
+  /* HEADER */
+  #hdr { background:var(--white); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:30; }
+  .hdr-top { max-width:1440px; margin:0 auto; padding:16px 32px 0; display:flex; justify-content:space-between; align-items:center; }
+  .logo { display:flex; align-items:center; gap:10px; }
+  .logo-mark { width:34px; height:34px; border-radius:9px; background:var(--ink); display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0; }
+  .logo-name { font-size:17px; font-weight:700; letter-spacing:-.3px; }
+  .logo-sep { width:1px; height:18px; background:var(--line); margin:0 8px; }
+  .logo-tag { font-size:11px; color:var(--slate); font-weight:500; letter-spacing:.04em; }
+  .hdr-kpis { display:flex; gap:24px; align-items:center; }
+  .hdr-kpi { text-align:right; }
+  .hdr-kpi-lbl { font-size:9px; font-weight:700; color:var(--slate); text-transform:uppercase; letter-spacing:.12em; }
+  .hdr-kpi-val { font-size:26px; font-weight:700; line-height:1.1; }
+  .hdr-kpi-val sup { font-size:11px; font-weight:500; color:var(--peach); vertical-align:middle; }
+
+  /* TABS */
+  .tabs { max-width:1440px; margin:0 auto; padding:0 32px; display:flex; margin-top:6px; }
+  .tab { padding:12px 16px; font-size:13px; font-weight:500; border:none; background:none; cursor:pointer; border-bottom:2px solid transparent; color:var(--slate); transition:all .12s; display:flex; align-items:center; gap:7px; white-space:nowrap; }
+  .tab:hover { color:var(--ink); }
+  .tab.on { border-bottom-color:var(--peach); color:var(--ink); font-weight:600; }
+  .tpill { padding:2px 7px; border-radius:20px; font-size:10px; font-weight:700; }
+
+  /* TOOLBAR */
+  #toolbar { background:var(--white); border-bottom:1px solid var(--line); padding:10px 0; }
+  .tbinner { max-width:1440px; margin:0 auto; padding:0 32px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .srchwrap { position:relative; }
+  .srchwrap svg { position:absolute; left:10px; top:50%; transform:translateY(-50%); pointer-events:none; }
+  .sinput { padding:7px 12px 7px 32px; border:1px solid var(--line); border-radius:8px; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--ink); background:var(--bg); width:210px; transition:all .12s; }
+  .sinput:focus { outline:none; border-color:var(--peach); background:var(--white); box-shadow:0 0 0 3px rgba(249,180,148,.15); }
+  .fsel { padding:7px 10px; border:1px solid var(--line); border-radius:8px; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--ink); background:var(--bg); cursor:pointer; transition:border-color .12s; }
+  .fsel:focus { outline:none; border-color:var(--peach); }
+  .tsep { width:1px; height:22px; background:var(--line); margin:0 4px; }
+
+  /* KPI STRIP */
+  #kstrip { max-width:1440px; margin:18px auto 0; padding:0 32px; display:grid; grid-template-columns:repeat(5,1fr); gap:10px; }
+  .kcrd { background:var(--white); border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
+  .klbl { font-size:9px; font-weight:700; color:var(--slate); text-transform:uppercase; letter-spacing:.12em; margin-bottom:4px; }
+  .kval { font-size:24px; font-weight:700; line-height:1; }
+  .ksub { font-size:11px; color:var(--slate); margin-top:3px; }
+  .kdot { width:7px; height:7px; border-radius:50%; display:inline-block; margin-right:5px; }
+
+  /* TABLE */
+  #twrap { max-width:1440px; margin:14px auto 40px; padding:0 32px; }
+  .tcrd { background:var(--white); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+  table { width:100%; border-collapse:collapse; }
+  thead tr { background:var(--bg); }
+  th { padding:11px 16px; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--slate); text-align:left; border-bottom:1px solid var(--line); white-space:nowrap; user-select:none; }
+  th.s { cursor:pointer; }
+  th.s:hover { color:var(--ink); }
+  td { padding:13px 16px; border-bottom:1px solid var(--bg); vertical-align:middle; }
+  tbody tr:last-child td { border-bottom:none; }
+  tbody tr { transition:background .1s; cursor:pointer; }
+  tbody tr:hover { background:#fdf6f3; }
+  tbody tr:hover .rqa { opacity:1; }
+  .rqa { opacity:0; transition:opacity .15s; display:flex; align-items:center; gap:5px; justify-content:flex-end; }
+  .qab { padding:5px 7px; border-radius:7px; border:none; cursor:pointer; background:var(--bg); color:var(--slate); font-size:13px; line-height:1; transition:all .12s; }
+  .qab:hover { background:var(--peach); color:white; }
+  .detb { padding:5px 12px; border-radius:7px; border:none; cursor:pointer; background:var(--ink10); color:var(--ink60); font-size:11px; font-weight:600; transition:all .12s; white-space:nowrap; font-family:'DM Sans',sans-serif; }
+  .detb:hover { background:var(--ink); color:white; }
+
+  /* BARS */
+  .sbar { height:4px; background:var(--line); border-radius:99px; width:54px; overflow:hidden; flex-shrink:0; }
+  .sbarf { height:100%; border-radius:99px; }
+  .ubar { height:5px; border-radius:99px; background:var(--line); flex:1; overflow:hidden; min-width:50px; }
+  .ubarf { height:100%; border-radius:99px; }
+
+  /* CHIPS / BADGES */
+  .chip { padding:2px 7px; border-radius:5px; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+  .cp { background:var(--ink); color:var(--peach); }
+  .cs { background:#e8ecf2; color:#4b5563; }
+  .cl { background:#f1f5f9; color:#94a3b8; }
+  .badge { padding:3px 8px; border-radius:20px; font-size:10px; font-weight:700; }
+  .bg { background:var(--green-bg); color:var(--green); }
+  .ba { background:var(--amber-bg); color:var(--amber); }
+  .br { background:var(--red-bg); color:var(--red); }
+  .bp { background:var(--purple-bg); color:var(--purple); }
+  .upsell { background:#d1fae5; color:#065f46; padding:1px 6px; border-radius:4px; font-size:9px; font-weight:700; text-transform:uppercase; margin-left:5px; }
+
+  /* TOOLTIP */
+  .tw { position:relative; display:inline-flex; align-items:center; }
+  .tb { visibility:hidden; opacity:0; pointer-events:none; position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%) translateY(4px); background:#1a1f2e; color:#fff; border-radius:10px; padding:14px 16px; width:216px; box-shadow:0 8px 28px rgba(0,0,0,.22); z-index:200; transition:opacity .14s,transform .14s; border:1px solid rgba(255,255,255,.07); }
+  .tw:hover .tb { visibility:visible; opacity:1; transform:translateX(-50%) translateY(0); }
+  .tt { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.12em; color:#8892a4; border-bottom:1px solid rgba(255,255,255,.08); padding-bottom:8px; margin-bottom:8px; text-align:center; }
+  .tr { display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; font-size:11px; }
+  .tr:last-child { margin-bottom:0; }
+  .ttot { display:flex; justify-content:space-between; font-size:13px; font-weight:700; padding-top:8px; border-top:1px solid rgba(255,255,255,.08); margin-top:4px; }
+  .tv { font-family:'DM Mono',monospace; font-size:11px; color:var(--peach); }
+
+  /* TRENDS */
+  .tu { color:var(--green); font-size:11px; font-weight:600; }
+  .td2 { color:var(--red); font-size:11px; font-weight:600; }
+  .teq { color:var(--slate); font-size:11px; }
+
+  /* SIDE PANEL */
+  #overlay { position:fixed; inset:0; background:rgba(17,19,24,.12); backdrop-filter:blur(4px); z-index:40; display:none; }
+  #sp { position:fixed; top:8px; right:8px; bottom:8px; width:460px; background:var(--white); z-index:50; border-radius:16px; border:1px solid var(--line); display:flex; flex-direction:column; transform:translateX(calc(100% + 20px)); transition:transform .35s cubic-bezier(.32,0,.14,1); box-shadow:-12px 0 40px rgba(0,0,0,.08); }
+  #sp.open { transform:translateX(0); }
+  #spscr { flex:1; overflow-y:auto; padding:24px; }
+  #spscr::-webkit-scrollbar { width:4px; }
+  #spscr::-webkit-scrollbar-thumb { background:var(--line); border-radius:99px; }
+
+  .sps { margin-bottom:20px; }
+  .spst { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.12em; color:var(--slate); margin-bottom:9px; }
+  .spg2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .sptile { background:var(--bg); border-radius:10px; padding:12px 14px; }
+  .sptl { font-size:9px; font-weight:700; color:var(--slate); text-transform:uppercase; letter-spacing:.1em; margin-bottom:3px; }
+  .sptv { font-size:14px; font-weight:600; }
+  .spsr { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--line); }
+  .spsr:last-child { border-bottom:none; }
+  .spsl { font-size:11px; font-weight:600; }
+  .spsb { font-size:10px; color:var(--slate); margin-top:1px; }
+  .spbw { display:flex; align-items:center; gap:6px; }
+  .spbt { height:5px; background:var(--line); border-radius:99px; flex:1; overflow:hidden; }
+  .spbf { height:100%; border-radius:99px; }
+  .sptot { display:flex; justify-content:space-between; align-items:center; padding:12px 14px; background:var(--ink); border-radius:10px; margin-top:10px; }
+  .sprr { display:flex; align-items:center; justify-content:space-between; padding:8px 12px; border-radius:8px; margin-bottom:6px; }
+
+  /* EMPTY */
+  .empty { padding:60px 32px; text-align:center; color:var(--slate); font-size:14px; }
+</style>
+</head>
+<body>
+
+<div id="overlay" onclick="closeDetails()"></div>
+
+<!-- ══ SIDE PANEL ══ -->
+<div id="sp">
+  <div id="spscr">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
+      <div>
+        <div id="sp-chips" style="display:flex;gap:6px;align-items:center;margin-bottom:8px;"></div>
+        <h2 id="sp-name" style="font-size:26px;font-weight:700;letter-spacing:-.5px;line-height:1.1;"></h2>
+        <div id="sp-dates" style="margin-top:6px;font-size:11px;color:var(--slate);display:flex;gap:16px;flex-wrap:wrap;"></div>
+      </div>
+      <button onclick="closeDetails()" style="padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);cursor:pointer;font-size:14px;color:var(--slate);flex-shrink:0;margin-left:12px;font-family:'DM Sans',sans-serif;">✕</button>
+    </div>
+
+    <div class="sps">
+      <div class="spst">Équipe Didask</div>
+      <div class="spg2">
+        <div class="sptile"><div class="sptl">CSM</div><div class="sptv" id="sp-csm" style="color:var(--peach-h);"></div></div>
+        <div class="sptile"><div class="sptl">KAM</div><div class="sptv" id="sp-kam"></div></div>
+      </div>
+    </div>
+
+    <div class="sps">
+      <div class="spst">Décomposition Health Score</div>
+      <div id="sp-breakdown" style="background:var(--bg);border-radius:12px;padding:12px 14px;"></div>
+      <div class="sptot">
+        <span style="font-size:12px;font-weight:600;color:rgba(255,255,255,.55);">Score Total</span>
+        <span id="sp-total" style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:var(--peach);"></span>
+      </div>
+    </div>
+
+    <div class="sps">
+      <div class="spst">Sources de données</div>
+      <div id="sp-sources"></div>
+    </div>
+
+    <div class="sps">
+      <div class="spst">Adoption IA Didask</div>
+      <div class="spg2">
+        <div class="sptile"><div class="sptl">🤖 Assistant IA</div><div id="sp-ai" class="sptv" style="margin-top:4px;"></div></div>
+        <div class="sptile"><div class="sptl">🎽 Coach IA</div><div id="sp-coach" class="sptv" style="margin-top:4px;"></div></div>
+      </div>
+    </div>
+
+    <div class="sps">
+      <div class="spst">Consommation contrat</div>
+      <div id="sp-usage" style="display:flex;flex-direction:column;gap:10px;"></div>
+    </div>
+
+    <div class="sps">
+      <div class="spst">Relation & Planning</div>
+      <div id="sp-relation"></div>
+    </div>
+
+    <div class="sps" style="margin-bottom:0;">
+      <div class="spst">Actions rapides → HubSpot</div>
+      <div id="sp-actions" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ HEADER ══ -->
+<header id="hdr">
+  <div class="hdr-top">
+    <div class="logo">
+      <div class="logo-mark">🧭</div>
+      <span class="logo-name">Didask</span>
+      <div class="logo-sep"></div>
+      <span class="logo-tag">CSM Intelligence</span>
+    </div>
+    <div class="hdr-kpis">
+      <div class="hdr-kpi">
+        <div class="hdr-kpi-lbl">Alertes Churn</div>
+        <div class="hdr-kpi-val" id="hk-churn" style="color:var(--red);">—</div>
+      </div>
+      <div class="hdr-kpi">
+        <div class="hdr-kpi-lbl">Renouvellements &lt;120j</div>
+        <div class="hdr-kpi-val" id="hk-renew" style="color:var(--amber);">—</div>
+      </div>
+      <div class="hdr-kpi">
+        <div class="hdr-kpi-lbl">Health Score Moyen</div>
+        <div class="hdr-kpi-val" id="hk-score">—<sup>/100</sup></div>
+      </div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab on" id="tab-all"   onclick="setTab('all')">Portefeuille Actif</button>
+    <button class="tab"    id="tab-churn" onclick="setTab('churn')">Alertes Churn <span class="tpill" id="pill-churn" style="background:var(--red-bg);color:var(--red);">0</span></button>
+    <button class="tab"    id="tab-renew" onclick="setTab('renew')">Renouvellements <span class="tpill" id="pill-renew" style="background:var(--amber-bg);color:var(--amber);">0</span></button>
+    <button class="tab"    id="tab-exp"   onclick="setTab('exp')">Opportunités ✦</button>
+    <button class="tab"    id="tab-ai"    onclick="setTab('ai')">Adoption IA ✨</button>
+  </div>
+</header>
+
+<!-- ══ TOOLBAR ══ -->
+<div id="toolbar">
+  <div class="tbinner">
+    <div class="srchwrap">
+      <svg width="13" height="13" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="6" stroke="#8892a4" stroke-width="2"/><path d="M14 14l3 3" stroke="#8892a4" stroke-width="2" stroke-linecap="round"/></svg>
+      <input class="sinput" type="text" id="si" placeholder="Rechercher un compte…">
+    </div>
+    <div class="tsep"></div>
+    <select class="fsel" id="fi-csm">
+      <option value="">Tous les CSM</option>
+      <option>Adeline</option><option>Agathe</option><option>Alexandre</option><option>Antoine</option><option>Florian</option>
+    </select>
+    <select class="fsel" id="fi-kam">
+      <option value="">Tous les KAM</option>
+      <option>Marion</option><option>Valérie</option>
+    </select>
+    <select class="fsel" id="fi-tier">
+      <option value="">Tous les accompagnements</option>
+      <option>Premium</option><option>Standard</option><option>Light</option>
+    </select>
+    <div class="tsep"></div>
+    <select class="fsel" id="fi-health">
+      <option value="">Tous statuts</option>
+      <option value="g">Sains (≥70)</option>
+      <option value="a">Vigilance (40-69)</option>
+      <option value="r">À risque (&lt;40)</option>
+    </select>
+  </div>
+</div>
+
+<!-- ══ KPI STRIP ══ -->
+<div id="kstrip">
+  <div class="kcrd"><div class="klbl">Comptes actifs</div><div class="kval" id="kp-tot">—</div><div class="ksub">dans le portefeuille</div></div>
+  <div class="kcrd"><div class="klbl"><span class="kdot" style="background:var(--green);"></span>Comptes sains</div><div class="kval" id="kp-g" style="color:var(--green);">—</div><div class="ksub" id="kp-gp">—</div></div>
+  <div class="kcrd"><div class="klbl"><span class="kdot" style="background:var(--amber);"></span>En vigilance</div><div class="kval" id="kp-a" style="color:var(--amber);">—</div><div class="ksub" id="kp-ap">—</div></div>
+  <div class="kcrd"><div class="klbl"><span class="kdot" style="background:var(--red);"></span>À risque de churn</div><div class="kval" id="kp-r" style="color:var(--red);">—</div><div class="ksub" id="kp-rp">—</div></div>
+  <div class="kcrd"><div class="klbl">Opportunités upsell</div><div class="kval" id="kp-up" style="color:var(--green);">—</div><div class="ksub">comptes au-dessus du contrat</div></div>
+</div>
+
+<!-- ══ TABLE ══ -->
+<main style="padding-bottom:40px;">
+  <div id="twrap">
+    <div class="tcrd">
+      <table><thead id="thead"></thead><tbody id="tbody"></tbody></table>
+      <div id="empty" class="empty" style="display:none;">🔍 Aucun compte ne correspond aux filtres sélectionnés.</div>
+    </div>
+  </div>
+</main>
+
+<script>
+/* ─── DATA ─── */
+const DB=[
+  {id:"1",name:"Uptoo",       tier:"Premium", csm:"Agathe",   kam:"Marion",  pulse:5,start:"01/01/2026",end:"31/12/2026",uLog:2, lLog:1, meet:10, next:"15/06/2026",aiAct:true, aiMsg:18,coachAct:false,coachMsg:0, trend:5,  seatsUsed:120,seatsContract:100,creditsUsed:450, creditsContract:500, mrr:4200, nps:72},
+  {id:"2",name:"Clariane",    tier:"Premium", csm:"Adeline",  kam:"Valérie", pulse:2,start:"15/05/2025",end:"15/05/2026",uLog:45,lLog:60,meet:65, next:null,         aiAct:true, aiMsg:3, coachAct:false,coachMsg:0, trend:-12,seatsUsed:45, seatsContract:50, creditsUsed:100, creditsContract:200, mrr:6500, nps:34},
+  {id:"3",name:"Marvesting",  tier:"Standard",csm:"Antoine",  kam:"Marion",  pulse:4,start:"20/01/2026",end:"20/01/2027",uLog:5, lLog:2, meet:45, next:"10/05/2026", aiAct:true, aiMsg:12,coachAct:true, coachMsg:8, trend:2,  seatsUsed:80, seatsContract:80, creditsUsed:550, creditsContract:500, mrr:2100, nps:61},
+  {id:"4",name:"Tasq-OM",     tier:"Light",   csm:"Florian",  kam:"Valérie", pulse:3,start:"01/04/2025",end:"20/05/2026",uLog:25,lLog:10,meet:120,next:null,         aiAct:false,aiMsg:0, coachAct:false,coachMsg:0, trend:-5, seatsUsed:15, seatsContract:20, creditsUsed:50,  creditsContract:100, mrr:800,  nps:null},
+  {id:"5",name:"Cap Retraite",tier:"Standard",csm:"Alexandre",kam:"Marion",  pulse:1,start:"12/06/2025",end:"12/06/2026",uLog:70,lLog:80,meet:90, next:null,         aiAct:false,aiMsg:0, coachAct:false,coachMsg:0, trend:-20,seatsUsed:10, seatsContract:50, creditsUsed:10,  creditsContract:200, mrr:1800, nps:18},
+  {id:"6",name:"L'Oréal",     tier:"Premium", csm:"Agathe",   kam:"Valérie", pulse:5,start:"01/02/2026",end:"31/01/2027",uLog:1, lLog:1, meet:5,  next:"10/06/2026", aiAct:true, aiMsg:25,coachAct:true, coachMsg:15,trend:15, seatsUsed:510,seatsContract:500,creditsUsed:1200,creditsContract:1000,mrr:12000,nps:81},
+];
+
+let activeTab='all', sortCol='score', sortAsc=false;
+
+/* ─── SCORE ─── */
+function sd(c){
+  const d={pp:0,ep:0,rp:0,pro:0,avg:0,mx:0,tot:0};
+  d.pp={5:20,4:15,3:10,2:5,1:0}[c.pulse]||10;
+  d.avg=(c.uLog+c.lLog)/2;
+  d.ep=d.avg<=15?40:d.avg<=30?20:0;
+  d.mx=c.tier==='Premium'?30:c.tier==='Standard'?90:365;
+  d.rp=c.meet<=d.mx?30:c.meet<=d.mx+30?15:0;
+  d.pro=c.next?10:0;
+  d.tot=Math.min(d.pp+d.ep+d.rp+d.pro,100);
+  return d;
+}
+const cs=c=>sd(c).tot;
+function days(s){if(!s)return 9999;const[d,m,y]=s.split('/');return Math.round((new Date(+y,+m-1,+d)-new Date())/864e5);}
+function risk(c,s){const dy=days(c.end),hr=Math.min(Math.round(60-s*.6),60);let tr=0;if(dy<=0)tr=40;else if(dy<120)tr=Math.round(40-dy/120*40);return{tot:Math.min(hr+tr,100),hr,tr,dy};}
+
+/* ─── HELPERS ─── */
+const sc=s=>s>=70?'var(--green)':s>=40?'var(--amber)':'var(--red)';
+const rc=r=>r>=50?'var(--red)':r>=30?'var(--amber)':'var(--green)';
+const bc=s=>s>=70?'bg':'ba br'.split(' ')[s>=40?0:1];  // not used directly
+const bl=s=>s>=70?'Sain':s>=40?'Vigilance':'Risque';
+const tchip=t=>t==='Premium'?'cp':t==='Standard'?'cs':'cl';
+function tr2(v){return v>0?`<span class="tu">↗ +${v}</span>`:v<0?`<span class="td2">↘ ${v}</span>`:`<span class="teq">→ =</span>`;}
+const pct=(u,c)=>Math.min(Math.round(u/c*100),150);
+const uc=p=>p>100?'var(--green)':p>80?'var(--amber)':'var(--blue)';
+function si2(col){if(sortCol!==col)return`<span style="color:var(--line);font-size:10px;margin-left:3px;">↕</span>`;return sortAsc?`<span style="color:var(--peach);font-size:10px;margin-left:3px;">↑</span>`:`<span style="color:var(--peach);font-size:10px;margin-left:3px;">↓</span>`;}
+function qa(action,name,e){e.stopPropagation();alert(`[Demo HubSpot] "${action}" → ${name}`);}
+function toggleSort(col){sortAsc=sortCol===col?!sortAsc:col==='name';sortCol=col;drawTable();}
+
+/* ─── TAB ─── */
+function setTab(t){
+  activeTab=t;
+  ['all','churn','renew','exp','ai'].forEach(x=>{
+    document.getElementById('tab-'+x).classList.toggle('on',x===t);
+  });
+  drawTable();
+}
+
+/* ─── DRAW ─── */
+function drawTable(){
+  const search=document.getElementById('si').value.toLowerCase();
+  const csmF=document.getElementById('fi-csm').value;
+  const kamF=document.getElementById('fi-kam').value;
+  const tierF=document.getElementById('fi-tier').value;
+  const hlF=document.getElementById('fi-health').value;
+
+  let data=DB.filter(c=>
+    c.name.toLowerCase().includes(search)&&
+    (!csmF||c.csm===csmF)&&(!kamF||c.kam===kamF)&&(!tierF||c.tier===tierF)
+  );
+  if(hlF){data=data.filter(c=>{const s=cs(c);return hlF==='g'?s>=70:hlF==='a'?s>=40&&s<70:s<40;});}
+  if(activeTab==='churn')data=data.filter(c=>risk(c,cs(c)).tot>=50);
+  if(activeTab==='renew')data=data.filter(c=>days(c.end)<=120);
+  if(activeTab==='exp')  data=data.filter(c=>cs(c)>=70||c.seatsUsed>c.seatsContract||c.creditsUsed>c.creditsContract);
+  data.sort((a,b)=>{
+    if(sortCol==='name') return sortAsc?a.name.localeCompare(b.name):b.name.localeCompare(a.name);
+    if(sortCol==='score')return sortAsc?cs(a)-cs(b):cs(b)-cs(a);
+    if(sortCol==='risk') return sortAsc?risk(a,cs(a)).tot-risk(b,cs(b)).tot:risk(b,cs(b)).tot-risk(a,cs(a)).tot;
+    if(sortCol==='mrr')  return sortAsc?a.mrr-b.mrr:b.mrr-a.mrr;
+    return 0;
+  });
+
+  // counters
+  const allC=DB.filter(c=>risk(c,cs(c)).tot>=50).length;
+  const allR=DB.filter(c=>days(c.end)<=120).length;
+  const avg=data.length?Math.round(data.reduce((a,c)=>a+cs(c),0)/data.length):0;
+  const greens=DB.filter(c=>cs(c)>=70).length;
+  const ambers=DB.filter(c=>{const s=cs(c);return s>=40&&s<70;}).length;
+  const reds=DB.filter(c=>cs(c)<40).length;
+  const ups=DB.filter(c=>c.seatsUsed>c.seatsContract||c.creditsUsed>c.creditsContract).length;
+
+  document.getElementById('hk-churn').textContent=allC;
+  document.getElementById('hk-renew').textContent=allR;
+  document.getElementById('hk-score').innerHTML=`${avg}<sup>/100</sup>`;
+  document.getElementById('pill-churn').textContent=allC;
+  document.getElementById('pill-renew').textContent=allR;
+  document.getElementById('kp-tot').textContent=DB.length;
+  document.getElementById('kp-g').textContent=greens;
+  document.getElementById('kp-gp').textContent=`${Math.round(greens/DB.length*100)}% du portefeuille`;
+  document.getElementById('kp-a').textContent=ambers;
+  document.getElementById('kp-ap').textContent=`${Math.round(ambers/DB.length*100)}% du portefeuille`;
+  document.getElementById('kp-r').textContent=reds;
+  document.getElementById('kp-rp').textContent=`${Math.round(reds/DB.length*100)}% du portefeuille`;
+  document.getElementById('kp-up').textContent=ups;
+
+  // head
+  const th=document.getElementById('thead');
+  if(activeTab==='ai'){
+    th.innerHTML=`<tr><th class="s" onclick="toggleSort('name')">Client ${si2('name')}</th><th>Tier / Équipe</th><th style="text-align:center">🤖 Assistant IA</th><th style="text-align:center">🎽 Coach IA</th><th style="text-align:center">Health Score</th><th></th></tr>`;
+  }else if(activeTab==='exp'){
+    th.innerHTML=`<tr><th class="s" onclick="toggleSort('name')">Client ${si2('name')}</th><th>Tier / Équipe</th><th class="s" onclick="toggleSort('score')">Health Score ${si2('score')}</th><th class="s" onclick="toggleSort('mrr')">MRR ${si2('mrr')}</th><th>Sièges</th><th>Crédits</th><th></th></tr>`;
+  }else{
+    th.innerHTML=`<tr><th class="s" onclick="toggleSort('name')">Client ${si2('name')}</th><th>Tier / Équipe</th><th class="s" onclick="toggleSort('score')">Health Score ${si2('score')}</th><th class="s" onclick="toggleSort('risk')">Risque Churn ${si2('risk')}</th><th>Fin de contrat</th><th>Dernier RDV</th><th></th></tr>`;
+  }
+
+  // body
+  const tb=document.getElementById('tbody');
+  const em=document.getElementById('empty');
+  tb.innerHTML='';
+  if(!data.length){em.style.display='block';return;}
+  em.style.display='none';
+
+  data.forEach(c=>{
+    const d=sd(c), s=d.tot, ro=risk(c,s), r=ro.tot, dl=days(c.end);
+    const scolor=sc(s), rcolor=rc(r);
+
+    const namecell=`<td><div style="font-size:15px;font-weight:700;letter-spacing:-.2px;">${c.name}</div><div style="font-size:10px;color:var(--slate);margin-top:2px;">${c.nps!=null?`NPS · <b style="color:${c.nps>=60?'var(--green)':c.nps>=40?'var(--amber)':'var(--red)'};">${c.nps}</b>`:'NPS · n/a'}</div></td>`;
+    const teamcell=`<td><div style="display:flex;flex-direction:column;gap:3px;"><span class="chip ${tchip(c.tier)}">${c.tier}</span><span style="font-size:12px;font-weight:600;color:var(--peach-h);margin-top:2px;">${c.csm}</span><span style="font-size:11px;color:var(--slate);">KAM: ${c.kam}</span></div></td>`;
+
+    const stip=`<div class="tb"><div class="tt">Détail Health Score</div><div class="tr"><span>Sentiment CSM</span><span class="tv">${d.pp}/20</span></div><div class="tr"><span>Engagement</span><span class="tv">${d.ep}/40</span></div><div class="tr"><span>Relation</span><span class="tv">${d.rp}/30</span></div><div class="tr"><span>Proactivité</span><span class="tv">${d.pro}/10</span></div><div class="ttot"><span>Total</span><span style="color:${scolor}">${s}/100</span></div></div>`;
+    const scorecell=`<td><div class="tw" style="gap:7px;"><span style="font-size:16px;font-weight:700;color:${scolor};font-family:'DM Mono',monospace;">${s}</span><span style="font-size:10px;color:var(--slate);">/100</span>${tr2(c.trend)}<div class="sbar"><div class="sbarf" style="width:${s}%;background:${scolor};"></div></div>${stip}</div></td>`;
+
+    const rtip=`<div class="tb"><div class="tt">Pondération du risque</div><div class="tr"><span>Santé dégradée</span><span class="tv">${ro.hr}/60</span></div><div class="tr"><span>Urgence (${ro.dy}j restants)</span><span class="tv">${ro.tr}/40</span></div><div class="ttot"><span>Risque total</span><span style="color:${rcolor}">${r}/100</span></div></div>`;
+    const riskcell=`<td><div class="tw" style="gap:7px;"><span style="font-size:16px;font-weight:700;color:${rcolor};font-family:'DM Mono',monospace;">${r}</span><span style="font-size:10px;color:var(--slate);">/100</span><div class="sbar"><div class="sbarf" style="width:${r}%;background:${rcolor};"></div></div>${rtip}</div></td>`;
+
+    const qa_html=`<td><div class="rqa"><button class="qab" onclick="qa('Email','${c.name.replace(/'/g,"\\'")}',event)" title="Email">✉️</button><button class="qab" onclick="qa('Appel','${c.name.replace(/'/g,"\\'")}',event)" title="Appel">📞</button><button class="qab" onclick="qa('Note','${c.name.replace(/'/g,"\\'")}',event)" title="Note">📝</button><button class="detb" onclick="openDetails('${c.id}',event)">Fiche →</button></div></td>`;
+
+    const tr3=document.createElement('tr');
+    tr3.onclick=()=>openDetails(c.id);
+
+    if(activeTab==='ai'){
+      const aic=c.aiAct?`<div style="display:flex;flex-direction:column;align-items:center;gap:3px;"><span class="badge bg">Activé</span><span style="font-size:12px;font-weight:600;">${c.aiMsg} msg/u</span></div>`:`<span class="badge" style="background:var(--bg);color:var(--slate);">Inactif</span>`;
+      const coc=c.coachAct?`<div style="display:flex;flex-direction:column;align-items:center;gap:3px;"><span class="badge bp">Activé</span><span style="font-size:12px;font-weight:600;">${c.coachMsg} msg/u</span></div>`:`<span class="badge" style="background:var(--bg);color:var(--slate);">Inactif</span>`;
+      const sbadge=s>=70?'bg':s>=40?'ba':'br';
+      tr3.innerHTML=namecell+teamcell+`<td style="text-align:center">${aic}</td><td style="text-align:center">${coc}</td><td style="text-align:center"><span class="badge ${sbadge}">${s}/100</span></td>`+qa_html;
+
+    }else if(activeTab==='exp'){
+      const mrrcell=`<td><span class="mono" style="font-size:13px;font-weight:600;">${c.mrr.toLocaleString('fr-FR')} €</span></td>`;
+      const sp2=pct(c.seatsUsed,c.seatsContract), cp2=pct(c.creditsUsed,c.creditsContract);
+      const seatcell=`<td><div style="font-size:12px;margin-bottom:4px;"><b style="color:${uc(sp2)}">${c.seatsUsed}</b> / ${c.seatsContract}${sp2>100?'<span class="upsell">Upsell</span>':''}</div><div style="display:flex;align-items:center;gap:5px;"><div class="ubar"><div class="ubarf" style="width:${Math.min(sp2,100)}%;background:${uc(sp2)};"></div></div><span style="font-size:10px;color:var(--slate);">${sp2}%</span></div></td>`;
+      const credcell=`<td><div style="font-size:12px;margin-bottom:4px;"><b style="color:${uc(cp2)}">${c.creditsUsed}</b> / ${c.creditsContract}${cp2>100?'<span class="upsell">Upsell</span>':''}</div><div style="display:flex;align-items:center;gap:5px;"><div class="ubar"><div class="ubarf" style="width:${Math.min(cp2,100)}%;background:${uc(cp2)};"></div></div><span style="font-size:10px;color:var(--slate);">${cp2}%</span></div></td>`;
+      tr3.innerHTML=namecell+teamcell+scorecell+mrrcell+seatcell+credcell+qa_html;
+
+    }else{
+      const endAlert=dl<=30?`<span class="badge br" style="margin-left:5px;font-size:9px;">${dl}j !</span>`:dl<=120?`<span class="badge ba" style="margin-left:5px;font-size:9px;">${dl}j</span>`:'';
+      const endcell=`<td><span style="font-size:12px;font-weight:500;color:${dl<=30?'var(--red)':dl<=120?'var(--amber)':'var(--slate)'};">${c.end}</span>${endAlert}</td>`;
+      const meetcell=`<td><span style="font-size:12px;font-weight:600;color:${c.meet<=d.mx?'var(--ink)':'var(--red)'};">${c.meet}j</span><span style="font-size:10px;color:var(--slate);"> · seuil ${d.mx}j</span></td>`;
+      tr3.innerHTML=namecell+teamcell+scorecell+riskcell+endcell+meetcell+qa_html;
+    }
+    tb.appendChild(tr3);
+  });
+}
+
+/* ─── SIDE PANEL ─── */
+function openDetails(id,e){
+  if(e)e.stopPropagation();
+  const c=DB.find(x=>x.id===id), d=sd(c), s=d.tot, ro=risk(c,s);
+  const sbadge=s>=70?'bg':s>=40?'ba':'br';
+  const sl=bl(s);
+
+  document.getElementById('sp-chips').innerHTML=`<span class="chip ${tchip(c.tier)}">${c.tier}</span><span class="badge ${sbadge}">${sl}</span>`;
+  document.getElementById('sp-name').textContent=c.name;
+  document.getElementById('sp-dates').innerHTML=`<span>📅 Début: <b>${c.start}</b></span><span>🏁 Fin: <b style="color:${days(c.end)<=120?'var(--red)':'inherit'}">${c.end}</b></span>`;
+  document.getElementById('sp-csm').textContent=c.csm;
+  document.getElementById('sp-kam').textContent=c.kam;
+
+  // breakdown
+  const rws=[
+    {lbl:'Sentiment CSM',  sub:`Note: ${c.pulse}/5`,                        pts:d.pp, mx:20},
+    {lbl:'Engagement',      sub:`Moy. connexion: ${d.avg.toFixed(0)}j`,      pts:d.ep, mx:40},
+    {lbl:`Relation (${c.tier})`,sub:`Dernier RDV: ${c.meet}j — seuil: ${d.mx}j`,pts:d.rp,mx:30},
+    {lbl:'Proactivité',    sub:`RDV planifié: ${c.next?'Oui':'Non'}`,       pts:d.pro,mx:10},
+  ];
+  const pc2=p=>p===0?'var(--red)':p<p*0.5?'var(--amber)':'var(--green)'; // not ideal but works
+  const ptc=pts=>pts===0?'var(--red)':'var(--green)';
+  document.getElementById('sp-breakdown').innerHTML=rws.map(r=>`
+    <div class="spsr">
+      <div><div class="spsl">${r.lbl}</div><div class="spsb">${r.sub}</div></div>
+      <div class="spbw">
+        <div class="spbt" style="width:80px;"><div class="spbf" style="width:${r.mx?r.pts/r.mx*100:0}%;background:${ptc(r.pts)};"></div></div>
+        <span style="font-family:'DM Mono',monospace;font-size:11px;color:${ptc(r.pts)};width:38px;text-align:right;">${r.pts}/${r.mx}</span>
+      </div>
+    </div>`).join('');
+  document.getElementById('sp-total').textContent=`${s}/100`;
+
+  // sources
+  const srcs=[
+    {name:'HubSpot',   icon:'🟠',status:c.meet<999?`Dernier RDV: ${c.meet}j`:'Non connecté',ok:c.meet<90},
+    {name:'Modjo',     icon:'🎧',status:c.pulse>0?`Pulse: ${c.pulse}/5 · Appels trackés`:'Pas de data',ok:c.pulse>=3},
+    {name:'Hyperline', icon:'💜',status:c.mrr?`MRR: ${c.mrr.toLocaleString('fr-FR')} €`:'Non connecté',ok:!!c.mrr},
+    {name:'Didask App',icon:'🧭',status:`Engagement: ${d.avg.toFixed(0)}j moy. connexion`,ok:d.avg<=30},
+  ];
+  document.getElementById('sp-sources').innerHTML=srcs.map(s2=>`
+    <div class="sprr" style="background:var(--bg);margin-bottom:6px;">
+      <span style="font-size:11px;font-weight:600;">${s2.icon} ${s2.name}</span>
+      <span style="font-size:10px;font-weight:600;color:${s2.ok?'var(--green)':'var(--amber)'};">${s2.status}</span>
+    </div>`).join('');
+
+  document.getElementById('sp-ai').innerHTML=c.aiAct?`<span style="color:var(--green);font-weight:700;">${c.aiMsg} msg/user</span>`:`<span style="color:var(--slate);">Non déployé</span>`;
+  document.getElementById('sp-coach').innerHTML=c.coachAct?`<span style="color:var(--purple);font-weight:700;">${c.coachMsg} msg/user</span>`:`<span style="color:var(--slate);">Non déployé</span>`;
+
+  const usgs=[{lbl:'Sièges',u:c.seatsUsed,ct:c.seatsContract},{lbl:'Crédits',u:c.creditsUsed,ct:c.creditsContract}];
+  document.getElementById('sp-usage').innerHTML=usgs.map(u=>{const p=pct(u.u,u.ct),col=uc(p);return`
+    <div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
+        <span style="font-weight:600;">${u.lbl}</span>
+        <span><b style="color:${col};">${u.u}</b> / ${u.ct} — <span style="color:${col};font-weight:700;">${p}%</span>${p>100?'<span class="upsell">Upsell</span>':''}</span>
+      </div>
+      <div class="ubar" style="height:6px;width:100%;"><div class="ubarf" style="width:${Math.min(p,100)}%;background:${col};"></div></div>
+    </div>`;}).join('');
+
+  const rels=[
+    {icon:'🤝',lbl:'Dernier meeting', val:`Il y a ${c.meet} jours${c.meet>d.mx?' <b style="color:var(--red);">(En retard)</b>':''}`,bg:'var(--bg)'},
+    {icon:'📅',lbl:'Prochain RDV',    val:c.next||'<b style="color:var(--red);">Non planifié ⚠</b>',bg:'#fdf6f3'},
+    {icon:'📊',lbl:'NPS Hyperline',   val:c.nps!=null?`<b style="color:${c.nps>=60?'var(--green)':c.nps>=40?'var(--amber)':'var(--red)'};">${c.nps}</b>`:'Non disponible',bg:'var(--bg)'},
+  ];
+  document.getElementById('sp-relation').innerHTML=rels.map(r=>`<div class="sprr" style="background:${r.bg};"><span style="font-size:12px;font-weight:600;">${r.icon} ${r.lbl}</span><span style="font-size:12px;">${r.val}</span></div>`).join('');
+
+  const acts=['✉️ Email','📞 Appel','📝 Note HubSpot','📋 Créer tâche','🔗 Ouvrir deal'];
+  document.getElementById('sp-actions').innerHTML=acts.map(a=>`<button onclick="qa('${a}','${c.name.replace(/'/g,"\\'")}',event)" style="padding:7px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .12s;" onmouseover="this.style.cssText=this.style.cssText+'background:var(--peach);color:white;border-color:var(--peach);'" onmouseout="this.style.background='var(--bg)';this.style.color='var(--ink)';this.style.borderColor='var(--line)'">${a}</button>`).join('');
+
+  document.getElementById('sp').classList.add('open');
+  document.getElementById('overlay').style.display='block';
+}
+function closeDetails(){
+  document.getElementById('sp').classList.remove('open');
+  document.getElementById('overlay').style.display='none';
+}
+
+/* ─── EVENTS ─── */
+['si','fi-csm','fi-kam','fi-tier','fi-health'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',drawTable);
+  document.getElementById(id).addEventListener('change',drawTable);
+});
+drawTable();
+</script>
+</body>
+</html>
