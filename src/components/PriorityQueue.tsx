@@ -97,6 +97,16 @@ export default function PriorityQueue({ entries }: Props) {
                   <span className={`text-xs px-2 py-0.5 rounded-full ring-1 font-medium ${SEGMENT_COLORS[entry.segment]}`}>
                     {SEGMENT_LABELS[entry.segment]}
                   </span>
+                  {entry.account.touchModel === "high" ? (
+                    <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-50 text-amber-700 ring-1 ring-amber-200">
+                      High Touch
+                    </span>
+                  ) : (
+                    <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-slate-50 text-slate-500 ring-1 ring-slate-200">
+                      Low Touch
+                    </span>
+                  )}
+                  <span className="text-xs text-slate-400">{entry.account.csm}</span>
                 </div>
                 <p className="text-sm text-slate-500 truncate">{entry.mainReason}</p>
               </div>

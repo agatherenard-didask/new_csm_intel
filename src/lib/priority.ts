@@ -31,19 +31,29 @@ function mainReason(entry: Omit<PriorityEntry, "mainReason" | "suggestedAction">
 }
 
 function suggestedAction(segment: PriorityEntry["segment"], account: Account, churnRisk: number): string {
+  const ht = account.touchModel === "high";
   switch (segment) {
     case "churn_risk":
-      return churnRisk >= 80
-        ? "Appel de rétention urgent + escalade direction"
-        : "Planifier un business review et un plan de renouvellement";
+      if (churnRisk >= 80) return "Appel de rétention urgent + escalade direction";
+      return ht
+        ? "Business review + plan de renouvellement à piloter en direct"
+        : "Traiter en batch : envoyer template renouvellement + proposer slot";
     case "adoption_issue":
-      return "Audit d'adoption + session de formation admin";
+      return ht
+        ? "Audit d'adoption + session de formation admin à planifier"
+        : "Envoyer ressources d'adoption en batch + proposer slot si pas de réponse";
     case "expansion":
-      return "Proposer une extension de contrat ou upsell";
+      return ht
+        ? "Préparer proposition upsell — appel dédié avec KAM"
+        : "Envoyer email signal d'expansion + orienter vers KAM";
     case "onboarding":
-      return `Avancer l'étape d'onboarding (actuelle : ${account.onboarding.currentStep})`;
+      return ht
+        ? `Piloter l'étape d'onboarding (actuelle : ${account.onboarding.currentStep}) — contact direct`
+        : `Vérifier avancement onboarding (${account.onboarding.currentStep}) en batch`;
     case "healthy":
-      return "Maintenir le contact — QBR dans 30 jours";
+      return ht
+        ? "Maintenir contact proactif — QBR dans 30 jours"
+        : "Aucune action requise — surveiller via dashboard";
   }
 }
 
@@ -85,5 +95,7 @@ export function buildPortfolioStats(entries: PriorityEntry[]) {
       (e) => e.segment === "adoption_issue" || e.segment === "onboarding"
     ).length,
     avgHealthScore: Math.round(entries.reduce((s, e) => s + e.healthScore, 0) / entries.length),
+    highTouchCount: entries.filter((e) => e.account.touchModel === "high").length,
+    lowTouchCount: entries.filter((e) => e.account.touchModel === "low").length,
   };
 }

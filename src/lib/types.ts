@@ -43,12 +43,15 @@ export interface PostTrainingSurvey {
   typeformResultsUrl: string;
 }
 
+export type TouchModel = "high" | "low";
+
 export interface Account {
   id: string;
   name: string;
   tier: Tier;
   csm: string;
   kam: string;
+  touchModel: TouchModel;
   pulse: number;          // 1–5
   start: string;          // dd/mm/yyyy
   end: string;            // dd/mm/yyyy
@@ -138,4 +141,6 @@ export interface PortfolioStats {
   atRiskCount: number;
   needsAttentionCount: number;
   avgHealthScore: number;
+  highTouchCount: number;
+  lowTouchCount: number;
 }

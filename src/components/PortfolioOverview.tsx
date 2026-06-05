@@ -44,7 +44,7 @@ export default function PortfolioOverview({ stats }: Props) {
       <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">
         Vue portefeuille
       </h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
         <Stat label="Comptes" value={stats.totalAccounts} />
         <Stat label="ARR total" value={arrFormatted} accent="blue" />
         <Stat label="Santé moyenne" value={`${stats.avgHealthScore}/100`} accent="blue" />
@@ -55,6 +55,17 @@ export default function PortfolioOverview({ stats }: Props) {
           accent="green"
         />
         <Stat label="À risque" value={stats.atRiskCount} accent="red" />
+        <Stat
+          label="High Touch"
+          value={stats.highTouchCount}
+          sub="suivi renforcé"
+          accent="yellow"
+        />
+        <Stat
+          label="Low Touch"
+          value={stats.lowTouchCount}
+          sub="batch / async"
+        />
       </div>
     </section>
   );
