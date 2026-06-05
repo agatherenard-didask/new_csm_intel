@@ -123,6 +123,8 @@ export interface Alert {
   suggestedAction: string;
 }
 
+export type TouchSuggestion = "suggest_high" | "suggest_low" | null;
+
 export interface PriorityEntry {
   account: Account;
   healthScore: number;
@@ -132,6 +134,7 @@ export interface PriorityEntry {
   suggestedAction: string;
   alerts: Alert[];
   segment: "churn_risk" | "adoption_issue" | "expansion" | "onboarding" | "healthy";
+  touchSuggestion: TouchSuggestion;
 }
 
 export interface PortfolioStats {
@@ -143,4 +146,12 @@ export interface PortfolioStats {
   avgHealthScore: number;
   highTouchCount: number;
   lowTouchCount: number;
+}
+
+export interface CsmCapacity {
+  csm: string;
+  htCount: number;
+  htMax: 15;
+  ltCount: number;
+  ltMax: 65;
 }

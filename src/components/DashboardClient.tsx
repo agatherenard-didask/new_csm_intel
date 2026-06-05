@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { PriorityEntry, PortfolioStats } from "@/lib/types";
-import { buildPortfolioStats } from "@/lib/priority";
+import { useState, useMemo } from "react";
+import { PriorityEntry, PortfolioStats, CsmCapacity } from "@/lib/types";
+import { buildPortfolioStats, buildCsmCapacities } from "@/lib/priority";
 import PortfolioOverview from "./PortfolioOverview";
 import PriorityQueue from "./PriorityQueue";
 import RiskDetection from "./RiskDetection";
 import ExpansionDetection from "./ExpansionDetection";
 import OnboardingMonitoring from "./OnboardingMonitoring";
+import BatchBlock from "./BatchBlock";
+import TouchSuggestions from "./TouchSuggestions";
 
 const CSM_LIST = ["Tous", "Agathe", "Adeline", "Antoine", "Charles"] as const;
 type CsmFilter = (typeof CSM_LIST)[number];
@@ -17,15 +19,74 @@ interface Props {
   today: string;
 }
 
+function CapacityPill({ cap }: { cap: CsmCapacity }) {
+  const htPct = Math.min((cap.htCount / cap.htMax) * 100, 100);
+  const ltPct = Math.min((cap.ltCount / cap.ltMax) * 100, 100);
+  const htOver = cap.htCount > cap.htMax;
+  const ltOver = cap.ltCount > cap.ltMax;
+
+  return (
+    <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs space-y-2">
+      <p className="font-semibold text-slate-700">{cap.csm}</p>
+      {/* High Touch bar */}
+      <div>
+        <div className="flex justify-between mb-1">
+          <span className={htOver ? "text-red-600 font-medium" : "text-amber-700"}>
+            High Touch
+          </span>
+          <span className={htOver ? "text-red-600 font-bold" : "text-slate-600"}>
+            {cap.htCount}/{cap.htMax}
+          </span>
+        </div>
+        <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all ${htOver ? "bg-red-400" : "bg-amber-400"}`}
+            style={{ width: `${htPct}%` }}
+          />
+        </div>
+      </div>
+      {/* Low Touch bar */}
+      <div>
+        <div className="flex justify-between mb-1">
+          <span className={ltOver ? "text-red-600 font-medium" : "text-slate-500"}>
+            Low Touch
+          </span>
+          <span className={ltOver ? "text-red-600 font-bold" : "text-slate-600"}>
+            {cap.ltCount}/{cap.ltMax}
+          </span>
+        </div>
+        <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all ${ltOver ? "bg-red-400" : "bg-slate-400"}`}
+            style={{ width: `${ltPct}%` }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardClient({ allEntries, today }: Props) {
   const [csmFilter, setCsmFilter] = useState<CsmFilter>("Tous");
 
-  const entries =
-    csmFilter === "Tous"
-      ? allEntries
-      : allEntries.filter((e) => e.account.csm === csmFilter);
+  const entries = useMemo(
+    () =>
+      csmFilter === "Tous"
+        ? allEntries
+        : allEntries.filter((e) => e.account.csm === csmFilter),
+    [allEntries, csmFilter]
+  );
 
-  const stats: PortfolioStats = buildPortfolioStats(entries);
+  const stats: PortfolioStats = useMemo(() => buildPortfolioStats(entries), [entries]);
+
+  // Capacities always computed from the full portfolio (per CSM, not filtered)
+  const allCapacities = useMemo(() => buildCsmCapacities(allEntries), [allEntries]);
+
+  // When a specific CSM is selected, show only their capacity card
+  const visibleCapacities =
+    csmFilter === "Tous"
+      ? allCapacities
+      : allCapacities.filter((c) => c.csm === csmFilter);
 
   return (
     <>
@@ -40,8 +101,7 @@ export default function DashboardClient({ allEntries, today }: Props) {
             </span>
           </div>
 
-          {/* CSM filter */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs text-slate-400 shrink-0">CSM :</span>
             <div className="flex flex-wrap gap-1.5">
               {CSM_LIST.map((csm) => (
@@ -70,7 +130,23 @@ export default function DashboardClient({ allEntries, today }: Props) {
           </div>
         ) : (
           <>
+            {/* Capacity cards */}
+            {visibleCapacities.length > 0 && (
+              <section>
+                <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">
+                  Capacité portefeuille
+                </h2>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {visibleCapacities.map((cap) => (
+                    <CapacityPill key={cap.csm} cap={cap} />
+                  ))}
+                </div>
+              </section>
+            )}
+
             <PortfolioOverview stats={stats} />
+            <BatchBlock entries={entries} />
+            <TouchSuggestions entries={entries} />
             <PriorityQueue entries={entries} />
             <RiskDetection entries={entries} />
             <ExpansionDetection entries={entries} />

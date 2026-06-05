@@ -1,4 +1,4 @@
-import { Account, PriorityEntry } from "./types";
+import { Account, PriorityEntry, TouchSuggestion, CsmCapacity } from "./types";
 import { getHealthScore, getChurnRisk, getPriorityScore } from "./scoring";
 import { detectAlerts, detectExpansionSignals } from "./alerts";
 
@@ -16,7 +16,7 @@ function deriveSegment(
   return "healthy";
 }
 
-function mainReason(entry: Omit<PriorityEntry, "mainReason" | "suggestedAction">): string {
+function mainReason(entry: Omit<PriorityEntry, "mainReason" | "suggestedAction" | "touchSuggestion">): string {
   const a = entry.account;
   const { churnRisk, healthScore } = entry;
 
@@ -57,6 +57,33 @@ function suggestedAction(segment: PriorityEntry["segment"], account: Account, ch
   }
 }
 
+function detectTouchSuggestion(
+  account: Account,
+  alerts: ReturnType<typeof detectAlerts>
+): TouchSuggestion {
+  const nonExpAlerts = alerts.filter((a) => a.category !== "expansion");
+  const hasCritical = nonExpAlerts.some((a) => a.severity === "critical");
+
+  if (account.touchModel === "low") {
+    // Suggest HT when a LT account accumulates multiple pressure signals
+    if (hasCritical || nonExpAlerts.length >= 3) return "suggest_high";
+  }
+
+  if (account.touchModel === "high") {
+    // Suggest LT when a HT account has been stable: no critical alerts + health not declining
+    if (!hasCritical) {
+      const hist = account.healthScoreHistory;
+      if (hist.length >= 8) {
+        const recent = hist[hist.length - 1];
+        const monthAgo = hist[hist.length - 8];
+        if (recent >= monthAgo - 2) return "suggest_low";
+      }
+    }
+  }
+
+  return null;
+}
+
 export function buildPriorityQueue(accounts: Account[]): PriorityEntry[] {
   const maxMrr = Math.max(...accounts.map((a) => a.mrr));
 
@@ -80,9 +107,28 @@ export function buildPriorityQueue(accounts: Account[]): PriorityEntry[] {
         ...partial,
         mainReason: mainReason(partial),
         suggestedAction: suggestedAction(segment, account, churnRisk.total),
+        touchSuggestion: detectTouchSuggestion(account, alerts),
       } satisfies PriorityEntry;
     })
     .sort((a, b) => b.priorityScore - a.priorityScore);
+}
+
+export function buildCsmCapacities(entries: PriorityEntry[]): CsmCapacity[] {
+  const map = new Map<string, { ht: number; lt: number }>();
+  for (const e of entries) {
+    const csm = e.account.csm;
+    if (!map.has(csm)) map.set(csm, { ht: 0, lt: 0 });
+    const c = map.get(csm)!;
+    if (e.account.touchModel === "high") c.ht++;
+    else c.lt++;
+  }
+  return Array.from(map.entries()).map(([csm, counts]) => ({
+    csm,
+    htCount: counts.ht,
+    htMax: 15 as const,
+    ltCount: counts.lt,
+    ltMax: 65 as const,
+  }));
 }
 
 export function buildPortfolioStats(entries: PriorityEntry[]) {
