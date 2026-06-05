@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Didask · CSM Intelligence</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDetails()"></div>
+
+<!-- ══ SIDE PANEL ══ -->
+<div id="sp">
+  <div id="spscr">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+      <div>
+        <div id="sp-chips" style="display:flex;gap:6px;align-items:center;margin-bottom:8px;"></div>
+        <h2 id="sp-name" style="font-size:26px;font-weight:700;letter-spacing:-.5px;line-height:1.1;"></h2>
+        <div id="sp-dates" style="margin-top:6px;font-size:11px;color:var(--slate);display:flex;gap:16px;flex-wrap:wrap;"></div>
+      </div>
+      <button onclick="closeDetails()" style="padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);cursor:pointer;font-size:14px;color:var(--slate);flex-shrink:0;margin-left:12px;font-family:'DM Sans',sans-serif;">✕</button>
+    </div>
+    <div id="sp-extlinks" style="margin-bottom:16px;"></div>
+    <div id="sp-nav">
+      <button class="sp-tab on" data-tab="overview"   onclick="setSPTab('overview')">Vue d'ensemble</button>
+      <button class="sp-tab"    data-tab="onboarding" onclick="setSPTab('onboarding')">Onboarding</button>
+      <button class="sp-tab"    data-tab="tickets"    onclick="setSPTab('tickets')">Tickets</button>
+    </div>
+    <div class="sps" data-panel="overview">
+      <div class="spst">Équipe Didask</div>
+      <div class="spg2">
+        <div class="sptile"><div class="sptl">CSM</div><div class="sptv" id="sp-csm"></div></div>
+        <div class="sptile"><div class="sptl">KAM</div><div class="sptv" id="sp-kam"></div></div>
+      </div>
+    </div>
+    <div class="sps" data-panel="overview">
+      <div class="spst">Décomposition Health Score</div>
+      <div id="sp-breakdown" style="background:var(--bg);border-radius:12px;padding:12px 14px;"></div>
+      <div class="sptot">
+        <span style="font-size:12px;font-weight:600;color:#fff;">Score Total</span>
+        <span id="sp-total" style="font-family:'Inter',system-ui,sans-serif;font-variant-numeric:tabular-nums;font-feature-settings:'cv11','ss01';font-size:20px;font-weight:700;color:#fff;"></span>
+      </div>
+    </div>
+    <div class="sps" data-panel="overview">
+      <div class="spst">Sources de données</div>
+      <div id="sp-sources"></div>
+    </div>
+    <div class="sps" data-panel="overview">
+      <div class="spst">Adoption IA Didask</div>
+      <div class="spg2">
+        <div class="sptile"><div class="sptl">🤖 Assistant IA</div><div id="sp-ai" class="sptv" style="margin-top:4px;"></div></div>
+        <div class="sptile"><div class="sptl">🎽 Coach IA</div><div id="sp-coach" class="sptv" style="margin-top:4px;"></div></div>
+      </div>
+    </div>
+    <div class="sps" data-panel="overview">
+      <div class="spst">Consommation contrat</div>
+      <div id="sp-usage" style="display:flex;flex-direction:column;gap:10px;"></div>
+    </div>
+    <div class="sps" data-panel="overview">
+      <div class="spst">Relation &amp; Planning</div>
+      <div id="sp-relation"></div>
+    </div>
+    <div class="sps" data-panel="overview" style="margin-bottom:0;">
+      <div class="spst">Actions rapides → HubSpot</div>
+      <div id="sp-actions" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+    </div>
+    <div class="sps" data-panel="onboarding" style="display:none;margin-bottom:0;">
+      <p class="sp-placeholder">Contenu à venir</p>
+    </div>
+    <div class="sps" data-panel="tickets" style="display:none;margin-bottom:0;">
+      <div class="spst">Tickets Support <span style="font-size:9px;color:var(--slate);font-weight:400;text-transform:none;letter-spacing:0;">· 90 derniers jours</span></div>
+      <div id="sp-tickets"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ HEADER ══ -->
+<header id="hdr">
+  <div class="hdr-top">
+    <div class="logo">
+      <img src="https://cdn.prod.website-files.com/6929772b32c6524a8dc1a668/694e6bbad422d65521dad91a_Vector%20(27).webp" alt="Didask" style="height:32px;width:auto;vertical-align:middle;margin-right:12px;">
+      <span class="logo-tag">Customer Intelligence</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <select id="user-select" class="fsel" style="min-width:140px;" onchange="applyCurrentUser(this.value)">
+        <option value="">Je suis…</option>
+        <option>Adeline</option>
+        <option>Agathe</option>
+        <option>Alexandre</option>
+        <option>Antoine</option>
+        <option>Florian</option>
+      </select>
+      <button id="admin-btn" class="detb" onclick="setAdminView()" style="display:none;white-space:nowrap;">Vue globale</button>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+      <div class="hdr-kpis">
+        <div class="hdr-kpi">
+          <div class="hdr-kpi-lbl">Alertes Churn</div>
+          <div class="hdr-kpi-val" id="hk-churn" style="color:var(--red);">—</div>
+        </div>
+        <div class="hdr-kpi">
+          <div class="hdr-kpi-lbl">Renouvellements &lt;120j</div>
+          <div class="hdr-kpi-val" id="hk-renew" style="color:var(--amber);">—</div>
+        </div>
+        <div class="hdr-kpi">
+          <div class="hdr-kpi-lbl">Health Score Moyen</div>
+          <div class="hdr-kpi-val" id="hk-score">—<sup>/100</sup></div>
+        </div>
+      </div>
+      <span id="last-update" style="font-size:10px;color:var(--slate);letter-spacing:.01em;display:flex;align-items:center;"><span class="live-dot"></span>Dernière mise à jour : il y a quelques secondes</span>
+    </div>
+  </div>
+  <div id="pbar" style="display:none;border-top:1px solid var(--line);">
+    <div style="max-width:1440px;margin:0 auto;padding:10px 32px;">
+      <p style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--slate);margin-bottom:8px;">🎯 Tes priorités du jour</p>
+      <div id="plist" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tabs-pill">
+      <button class="tab on" id="tab-all"   onclick="setTab('all')">Portefeuille Actif</button>
+      <button class="tab"    id="tab-churn" onclick="setTab('churn')">Alertes Churn <span class="tpill" id="pill-churn" style="background:var(--red-bg);color:var(--red);">0</span></button>
+      <button class="tab"    id="tab-renew" onclick="setTab('renew')">Renouvellements <span class="tpill" id="pill-renew" style="background:var(--amber-bg);color:var(--amber);">0</span></button>
+      <button class="tab"    id="tab-exp"   onclick="setTab('exp')">Opportunités ✦</button>
+      <button class="tab"    id="tab-ai"    onclick="setTab('ai')">Adoption IA ✨</button>
+      <button class="tab"    id="tab-reporting" onclick="setTab('reporting')">Reporting 📊</button>
+    </div>
+  </div>
+</header>
+
+<!-- ══ TOOLBAR ══ -->
+<div id="toolbar">
+  <div class="tbinner">
+    <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;white-space:nowrap;">Filtres</span>
+    <div class="tsep"></div>
+    <div class="srchwrap">
+      <svg width="13" height="13" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="6" stroke="#8892a4" stroke-width="2"/><path d="M14 14l3 3" stroke="#8892a4" stroke-width="2" stroke-linecap="round"/></svg>
+      <input class="sinput" type="text" id="si" placeholder="Rechercher un compte…">
+    </div>
+    <div class="tsep"></div>
+    <div class="fsel-wrap"><select class="fsel" id="fi-csm">
+      <option value="">Tous les CSM</option>
+      <option>Adeline</option><option>Agathe</option><option>Alexandre</option><option>Antoine</option><option>Florian</option>
+    </select></div>
+    <div class="fsel-wrap"><select class="fsel" id="fi-kam">
+      <option value="">Tous les KAM</option>
+      <option>Marion</option><option>Valérie</option>
+    </select></div>
+    <div class="fsel-wrap"><select class="fsel" id="fi-tier">
+      <option value="">Tous les accompagnements</option>
+      <option>Premium</option><option>Standard</option><option>Light</option>
+    </select></div>
+    <div class="tsep"></div>
+    <div class="fsel-wrap"><select class="fsel" id="fi-health">
+      <option value="">Tous statuts</option>
+      <option value="g">Sains (≥70)</option>
+      <option value="a">Vigilance (40-69)</option>
+      <option value="r">À risque (&lt;40)</option>
+    </select></div>
+    <div class="fsel-wrap"><select class="fsel" id="fi-stage" onchange="drawTable()">
+      <option value="">Tous statuts lifecycle</option>
+      <option>Kick off</option>
+      <option>Onboarding</option>
+      <option>Conception/diffusion</option>
+      <option>Running</option>
+    </select></div>
+    <div class="tsep"></div>
+    <button id="reset-btn" class="fsel" onclick="resetFilters()" style="cursor:pointer;color:var(--slate);">✕ Réinitialiser</button>
+    <span id="filter-count" style="font-size:11px;color:var(--slate);display:none;"></span>
+  </div>
+</div>
+
+<!-- ══ KPI STRIP ══ -->
+<div id="kstrip">
+  <div class="kcrd" onclick="drillDown('all')" tabindex="0" title="Voir tous les comptes"><div class="klbl">Comptes actifs</div><div class="kval" id="kp-tot">—</div><div class="ksub">dans le portefeuille</div></div>
+  <div class="kcrd" onclick="drillDown('g')" tabindex="0" title="Filtrer : Comptes sains (Health ≥ 70)"><div class="klbl"><span class="kdot" style="background:var(--green);"></span>Comptes sains</div><div class="kval" id="kp-g" style="color:var(--green);">—</div><div class="ksub" id="kp-gp">—</div></div>
+  <div class="kcrd" onclick="drillDown('a')" tabindex="0" title="Filtrer : En vigilance (Health 40–69)"><div class="klbl"><span class="kdot" style="background:var(--amber);"></span>En vigilance</div><div class="kval" id="kp-a" style="color:var(--amber);">—</div><div class="ksub" id="kp-ap">—</div></div>
+  <div class="kcrd" onclick="drillDown('churn')" tabindex="0" title="Voir les alertes churn"><div class="klbl"><span class="kdot" style="background:var(--red);"></span>À risque de churn</div><div class="kval" id="kp-r" style="color:var(--red);">—</div><div class="ksub" id="kp-rp">—</div></div>
+  <div class="kcrd" onclick="drillDown('exp')" tabindex="0" title="Voir les opportunités upsell"><div class="klbl">Opportunités upsell</div><div class="kval" id="kp-up" style="color:var(--green);">—</div><div class="ksub">comptes au-dessus du contrat</div></div>
+</div>
+
+<!-- ══ OVERVIEW ══ -->
+<section id="overview" style="max-width:1440px;margin:14px auto 0;padding:0 32px;">
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+    <div class="bg-white rounded-2xl shadow-sm p-6">
+      <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Répartition santé</p>
+      <div id="chart-health"></div>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm p-6">
+      <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Top 5 risque churn</p>
+      <div id="chart-churn"></div>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm p-6">
+      <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Portefeuille par CSM</p>
+      <div id="chart-csm"></div>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm p-6">
+      <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">CSMs Workload</p>
+      <div id="chart-workload"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ TABLE ══ -->
+<main style="padding-bottom:40px;">
+  <div id="twrap">
+    <div class="tcrd" id="tcard">
+      <table><thead id="thead"></thead><tbody id="tbody"></tbody></table>
+    </div>
+    <div id="empty" style="display:none;"></div>
+    </div>
+  </div>
+</main>
+
+<div id="tt-portal"></div>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
