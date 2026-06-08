@@ -278,7 +278,7 @@ export default function DashboardClient({ allEntries, today }: Props) {
             <div className="mb-3 flex items-center gap-2">
               <span className="text-base">🔥</span>
               <span className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                Tes priorités du jour
+                {csmFilter === "Tous" ? "Priorités globales du portefeuille" : "Tes priorités du jour"}
               </span>
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2">
@@ -369,8 +369,17 @@ export default function DashboardClient({ allEntries, today }: Props) {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Rechercher un compte…"
-                  className="rounded-lg border border-slate-200 bg-white pl-7 pr-3 py-1.5 text-xs text-slate-700 placeholder-slate-300 focus:border-slate-400 focus:outline-none w-48"
+                  className="rounded-lg border border-slate-200 bg-white pl-7 pr-7 py-1.5 text-xs text-slate-700 placeholder-slate-300 focus:border-slate-400 focus:outline-none w-48"
                 />
+                {search && (
+                  <button
+                    onClick={() => setSearch("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs leading-none"
+                    title="Effacer"
+                  >
+                    ✕
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -655,9 +664,17 @@ export default function DashboardClient({ allEntries, today }: Props) {
 
             {/* Full LT table */}
             <div>
-              <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-500">
-                Tous les comptes Low Touch
-              </h3>
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                  Tous les comptes Low Touch
+                </h3>
+                <button
+                  onClick={() => exportCSV(ltEntries, "low-touch.csv")}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-500 hover:border-slate-400"
+                >
+                  ↓ Export CSV
+                </button>
+              </div>
               <AccountTable entries={ltEntries} onSelect={setSelected} />
             </div>
           </div>

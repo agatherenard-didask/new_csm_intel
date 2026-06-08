@@ -191,9 +191,6 @@ export default function AccountTable({ entries, onSelect }: Props) {
                       </span>
                     )}
                   </div>
-                  <div className="mt-0.5 text-xs text-slate-400">
-                    CSM: {a.csm}&nbsp;&nbsp;KAM: {a.kam}
-                  </div>
                 </td>
 
                 {/* TIER / ÉQUIPE */}
