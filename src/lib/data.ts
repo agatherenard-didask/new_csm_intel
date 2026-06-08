@@ -1,4 +1,4 @@
-import { Account } from "./types";
+import { Account, Contact } from "./types";
 
 export const ACCOUNTS: Account[] = [
   {
@@ -53,6 +53,10 @@ export const ACCOUNTS: Account[] = [
     supportTickets: [
       { date: "2026-04-18", topic: "Erreur affichage module vidéo",  status: "résolu", url: "https://app.intercom.com/a/apps/didask01/conversations/44001" },
       { date: "2026-02-11", topic: "Bug export CSV rapports",         status: "résolu", url: "https://app.intercom.com/a/apps/didask01/conversations/44002" },
+    ],
+    contacts: [
+      { name: "Sophie Marchand", role: "Champion", email: "s.marchand@uptoo.fr", phone: "+33 6 12 34 56 78" },
+      { name: "Frédéric Bonnet", role: "Sponsor", email: "f.bonnet@uptoo.fr", phone: null },
     ],
   },
   {
@@ -121,6 +125,10 @@ export const ACCOUNTS: Account[] = [
       { date: "2026-04-15", topic: "Permissions rôles incorrectes",     status: "en cours", url: "https://app.intercom.com/a/apps/didask01/conversations/55002" },
       { date: "2026-04-05", topic: "Synchronisation SIRH défaillante",  status: "en cours", url: "https://app.intercom.com/a/apps/didask01/conversations/55003" },
     ],
+    contacts: [
+      { name: "Isabelle Verdier", role: "Champion", email: "i.verdier@clariane.com", phone: "+33 6 98 76 54 32" },
+      { name: "Marc Delacroix", role: "Sponsor", email: "m.delacroix@clariane.com", phone: null },
+    ],
   },
   {
     id: "3",
@@ -172,6 +180,10 @@ export const ACCOUNTS: Account[] = [
     ],
     supportTickets: [
       { date: "2026-02-08", topic: "Erreur chargement parcours", status: "résolu", url: "https://app.intercom.com/a/apps/didask01/conversations/66001" },
+    ],
+    contacts: [
+      { name: "Lucie Favre", role: "Champion", email: "l.favre@marvesting.com", phone: "+33 7 11 22 33 44" },
+      { name: "Thomas Girard", role: "Sponsor", email: "t.girard@marvesting.com", phone: "+33 6 55 44 33 22" },
     ],
   },
   {
@@ -237,6 +249,9 @@ export const ACCOUNTS: Account[] = [
     supportTickets: [
       { date: "2026-04-10", topic: "Bug affichage leçon interactive",        status: "en cours", url: "https://app.intercom.com/a/apps/didask01/conversations/77001" },
       { date: "2026-02-22", topic: "Réinitialisation mot de passe en masse", status: "résolu",   url: "https://app.intercom.com/a/apps/didask01/conversations/77002" },
+    ],
+    contacts: [
+      { name: "Aurélie Petit", role: "Champion", email: "a.petit@tasq-om.com", phone: null },
     ],
   },
   {
@@ -304,6 +319,10 @@ export const ACCOUNTS: Account[] = [
       { date: "2026-04-26", topic: "Accès impossible pour 8 utilisateurs", status: "en cours", url: "https://app.intercom.com/a/apps/didask01/conversations/88001" },
       { date: "2026-03-20", topic: "Crash module évaluation",               status: "en cours", url: "https://app.intercom.com/a/apps/didask01/conversations/88002" },
     ],
+    contacts: [
+      { name: "Nadège Rousseau", role: "Champion", email: "n.rousseau@capretraite.fr", phone: "+33 6 22 11 00 99" },
+      { name: "Patrick Lemoine", role: "Sponsor", email: "p.lemoine@capretraite.fr", phone: null },
+    ],
   },
   {
     id: "6",
@@ -356,6 +375,10 @@ export const ACCOUNTS: Account[] = [
     ],
     supportTickets: [
       { date: "2026-03-28", topic: "Accès SSO Okta — nouvelle entité", status: "résolu", url: "https://app.intercom.com/a/apps/didask01/conversations/99001" },
+    ],
+    contacts: [
+      { name: "Clara Dupuis", role: "Champion", email: "c.dupuis@loreal.com", phone: "+33 7 88 77 66 55" },
+      { name: "Éric Fontaine", role: "Sponsor", email: "e.fontaine@loreal.com", phone: "+33 6 44 55 66 77" },
     ],
   },
 ];

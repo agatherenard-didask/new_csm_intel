@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PriorityEntry, Alert } from "@/lib/types";
+import { PriorityEntry, Alert, Contact } from "@/lib/types";
 import {
   getHealthScoreDetails,
   daysToDate,
@@ -213,6 +213,20 @@ export default function AccountDetailPanel({ entry, onClose }: Props) {
           </div>
         </section>
 
+        {/* Client contacts */}
+        {a.contacts.length > 0 && (
+          <section>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Contacts client
+            </p>
+            <div className="space-y-2">
+              {a.contacts.map((c, i) => (
+                <ContactCard key={i} contact={c} />
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Health decomposition */}
         <section>
           <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
@@ -304,6 +318,34 @@ export default function AccountDetailPanel({ entry, onClose }: Props) {
             ⬇ Ce compte est stable — envisager retour en Low Touch ?
           </div>
         )}
+      </div>
+    );
+  }
+
+  function ContactCard({ contact }: { contact: Contact }) {
+    const isChampion = contact.role === "Champion";
+    return (
+      <div className="flex items-center gap-3 rounded-lg border border-slate-200 p-3">
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${isChampion ? "bg-amber-100 text-amber-700" : "bg-violet-100 text-violet-700"}`}>
+          {contact.name.charAt(0)}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-slate-900 text-sm">{contact.name}</span>
+            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${isChampion ? "bg-amber-100 text-amber-700" : "bg-violet-100 text-violet-700"}`}>
+              {contact.role}
+            </span>
+          </div>
+          <div className="mt-0.5 flex gap-3 text-xs text-slate-400">
+            {contact.email && (
+              <a href={`mailto:${contact.email}`} className="hover:text-slate-700 truncate">
+                {contact.email}
+              </a>
+            )}
+            {contact.phone && <span>{contact.phone}</span>}
+            {!contact.email && !contact.phone && <span>—</span>}
+          </div>
+        </div>
       </div>
     );
   }

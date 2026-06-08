@@ -1,4 +1,13 @@
 export type Tier = "Premium" | "Standard" | "Light";
+
+export type ContactRole = "Champion" | "Sponsor";
+
+export interface Contact {
+  name: string;
+  role: ContactRole;
+  email: string | null;
+  phone: string | null;
+}
 export type ClientStage = "Kick off" | "Onboarding" | "Conception/diffusion" | "Running";
 export type OnboardingTrack = "mentoring" | "formation initiale";
 export type TicketStatus = "résolu" | "en cours" | "abandonné";
@@ -84,6 +93,7 @@ export interface Account {
   riskChurnHistory: number[];
   supportConversations: SupportConversation[];
   supportTickets: SupportTicket[];
+  contacts: Contact[];
 }
 
 export interface ScoreDetails {
