@@ -19,7 +19,7 @@ interface Props {
 
 export default function DashboardClient({ allEntries, today }: Props) {
   const [csmFilter, setCsmFilter] = useState<CsmFilter>("Tous");
-  const [tab, setTab] = useState<TabKey>("ht");
+  const [tab, setTab] = useState<TabKey>("week");
   const [selected, setSelected] = useState<PriorityEntry | null>(null);
   const [donePriority, setDonePriority] = useState<Set<string>>(new Set());
   const [doneBatch, setDoneBatch] = useState<Set<string>>(new Set());
