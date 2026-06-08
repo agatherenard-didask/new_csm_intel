@@ -10,7 +10,7 @@ import AccountDetailPanel from "./AccountDetailPanel";
 const CSM_LIST = ["Tous", "Agathe", "Adeline", "Antoine", "Charles"] as const;
 type CsmFilter = (typeof CSM_LIST)[number];
 
-type TabKey = "ht" | "lt" | "renewals" | "expansion" | "onboarding";
+type TabKey = "week" | "ht" | "lt" | "renewals" | "expansion" | "onboarding";
 
 interface Props {
   allEntries: PriorityEntry[];
@@ -23,14 +23,18 @@ export default function DashboardClient({ allEntries, today }: Props) {
   const [selected, setSelected] = useState<PriorityEntry | null>(null);
   const [donePriority, setDonePriority] = useState<Set<string>>(new Set());
   const [doneBatch, setDoneBatch] = useState<Set<string>>(new Set());
+  const [search, setSearch] = useState("");
+  const [focusHT, setFocusHT] = useState(false);
 
-  const entries = useMemo(
-    () =>
+  const entries = useMemo(() => {
+    const byCSM =
       csmFilter === "Tous"
         ? allEntries
-        : allEntries.filter((e) => e.account.csm === csmFilter),
-    [allEntries, csmFilter]
-  );
+        : allEntries.filter((e) => e.account.csm === csmFilter);
+    if (!search.trim()) return byCSM;
+    const q = search.trim().toLowerCase();
+    return byCSM.filter((e) => e.account.name.toLowerCase().includes(q));
+  }, [allEntries, csmFilter, search]);
 
   const stats = useMemo(() => buildPortfolioStats(entries), [entries]);
   const allCapacities = useMemo(() => buildCsmCapacities(allEntries), [allEntries]);
@@ -47,6 +51,77 @@ export default function DashboardClient({ allEntries, today }: Props) {
   const onboardingEntries = entries.filter((e) =>
     ["Kick off", "Onboarding"].includes(e.account.clientStage)
   );
+
+  // "Ma semaine" helpers
+  function parseDDMMYYYY(s: string): Date {
+    const [d, m, y] = s.split("/").map(Number);
+    return new Date(y, m - 1, d);
+  }
+  function daysFromNow(isoOrDDMMYYYY: string, isDDMM = false): number {
+    const date = isDDMM ? parseDDMMYYYY(isoOrDDMMYYYY) : new Date(isoOrDDMMYYYY);
+    return Math.round((date.getTime() - Date.now()) / 86_400_000);
+  }
+  function daysAgo(isoDate: string): number {
+    return Math.round((Date.now() - new Date(isoDate).getTime()) / 86_400_000);
+  }
+
+  const meetingsThisWeek = entries.filter((e) => {
+    if (!e.account.next) return false;
+    const d = daysFromNow(e.account.next, true);
+    return d >= 0 && d <= 7;
+  }).sort((a, b) => {
+    const da = daysFromNow(a.account.next!, true);
+    const db = daysFromNow(b.account.next!, true);
+    return da - db;
+  });
+
+  const htNoContact = entries.filter(
+    (e) =>
+      e.account.touchModel === "high" &&
+      e.account.lastInteractionDate !== null &&
+      daysAgo(e.account.lastInteractionDate) > 14
+  ).sort((a, b) =>
+    daysAgo(b.account.lastInteractionDate!) - daysAgo(a.account.lastInteractionDate!)
+  );
+
+  // CSV export
+  function exportCSV(subset: PriorityEntry[], filename: string) {
+    const SEVERITY_ORDER: Record<string, number> = { critical: 0, warning: 1, info: 2 };
+    const statusFor = (e: PriorityEntry) => {
+      if (e.churnRisk.total >= 70) return "Critique";
+      if (e.churnRisk.total >= 40 || e.healthScore < 55) return "Vigilance";
+      if (detectExpansionSignals(e.account).length > 0) return "Expansion";
+      return "Sain";
+    };
+    const headers = [
+      "Compte","CSM","KAM","Tier","Touch","Health Score","Risque Churn",
+      "Fin de contrat","Jours renouvellement","Dernier RDV (j)","Dernière interaction",
+      "Créations contenu","MRR (€)","Statut","Alertes non-exp."
+    ];
+    const rows = subset.map((e) => {
+      const a = e.account;
+      const nonExp = e.alerts.filter((al) => al.category !== "expansion");
+      return [
+        a.name, a.csm, a.kam, a.tier,
+        a.touchModel === "high" ? "High Touch" : "Low Touch",
+        e.healthScore, e.churnRisk.total, a.end, e.churnRisk.daysToRenewal,
+        a.meet, a.lastInteractionDate ?? "",
+        a.contentCreationCount, a.mrr, statusFor(e), nonExp.length,
+      ];
+    });
+    const csvContent = [headers, ...rows]
+      .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob(["﻿" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
 
   // KPIs
   const churnAlertCount = entries.filter((e) => e.churnRisk.total >= 60).length;
@@ -76,7 +151,10 @@ export default function DashboardClient({ allEntries, today }: Props) {
       ? allCapacities
       : allCapacities.filter((c) => c.csm === csmFilter);
 
+  const weekCount = meetingsThisWeek.length + (batchPending.length > 0 ? 1 : 0) + htNoContact.length;
+
   const tabs: { key: TabKey; label: string; count: number; color: string }[] = [
+    { key: "week", label: "Ma semaine", count: weekCount, color: "text-emerald-600" },
     { key: "ht", label: "High Touch", count: htEntries.length, color: "text-amber-600" },
     { key: "lt", label: "Low Touch · Bloc du jour", count: batchPending.length, color: "text-slate-600" },
     { key: "renewals", label: "Renouvellements", count: renewalCount, color: "text-orange-500" },
@@ -257,37 +335,201 @@ export default function DashboardClient({ allEntries, today }: Props) {
 
         {/* ── TAB BAR ─────────────────────────────────────────────── */}
         <div className="border-b border-slate-200">
-          <nav className="flex gap-0 overflow-x-auto">
-            {tabs.map((t) => (
-              <button
-                key={t.key}
-                onClick={() => setTab(t.key)}
-                className={`flex items-center gap-2 whitespace-nowrap border-b-2 px-5 py-3 text-sm font-semibold transition-colors ${
-                  tab === t.key
-                    ? "border-[#f9b494] text-slate-900"
-                    : "border-transparent text-slate-400 hover:text-slate-600"
-                }`}
-              >
-                {t.label}
-                {t.count > 0 && (
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs ${
-                      tab === t.key ? `${t.color} bg-slate-100` : "bg-slate-100 text-slate-400"
-                    }`}
-                  >
-                    {t.count}
-                  </span>
-                )}
-              </button>
-            ))}
-          </nav>
+          <div className="flex items-end justify-between gap-4">
+            <nav className="flex gap-0 overflow-x-auto">
+              {tabs.map((t) => (
+                <button
+                  key={t.key}
+                  onClick={() => setTab(t.key)}
+                  className={`flex items-center gap-2 whitespace-nowrap border-b-2 px-5 py-3 text-sm font-semibold transition-colors ${
+                    tab === t.key
+                      ? "border-[#f9b494] text-slate-900"
+                      : "border-transparent text-slate-400 hover:text-slate-600"
+                  }`}
+                >
+                  {t.label}
+                  {t.count > 0 && (
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs ${
+                        tab === t.key ? `${t.color} bg-slate-100` : "bg-slate-100 text-slate-400"
+                      }`}
+                    >
+                      {t.count}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </nav>
+            {/* Search bar */}
+            <div className="flex items-center gap-2 pb-2 shrink-0">
+              <div className="relative">
+                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-300 text-xs">🔍</span>
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Rechercher un compte…"
+                  className="rounded-lg border border-slate-200 bg-white pl-7 pr-3 py-1.5 text-xs text-slate-700 placeholder-slate-300 focus:border-slate-400 focus:outline-none w-48"
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* ── TAB CONTENT ─────────────────────────────────────────── */}
 
+        {/* MA SEMAINE */}
+        {tab === "week" && (
+          <div className="space-y-8">
+
+            {/* Réunions planifiées */}
+            <section>
+              <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-500">
+                📅 Réunions planifiées cette semaine
+              </h3>
+              {meetingsThisWeek.length === 0 ? (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-400">
+                  Aucune réunion planifiée dans les 7 prochains jours.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {meetingsThisWeek.map((e) => {
+                    const d = daysFromNow(e.account.next!, true);
+                    return (
+                      <div
+                        key={e.account.id}
+                        className="flex items-center justify-between rounded-xl border border-slate-100 bg-white px-5 py-3 shadow-sm"
+                      >
+                        <div>
+                          <span className="font-semibold text-slate-900">{e.account.name}</span>
+                          <span className="ml-2 text-xs text-slate-400">
+                            {e.account.csm} · {e.account.tier}
+                          </span>
+                          <div className="mt-0.5 text-xs text-slate-500">{e.mainReason}</div>
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <div className="text-right">
+                            <div className={`text-sm font-bold ${d === 0 ? "text-red-600" : d <= 2 ? "text-amber-600" : "text-emerald-600"}`}>
+                              {d === 0 ? "Aujourd'hui" : d === 1 ? "Demain" : `Dans ${d}j`}
+                            </div>
+                            <div className="text-xs text-slate-400">{e.account.next}</div>
+                          </div>
+                          <button
+                            onClick={() => setSelected(e)}
+                            className="rounded-lg bg-[#f9b494] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#f7a07e]"
+                          >
+                            Détails →
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
+            {/* HT sans interaction récente */}
+            <section>
+              <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-500">
+                ⚠ High Touch sans interaction récente (&gt;14j)
+              </h3>
+              {htNoContact.length === 0 ? (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                  Tous les comptes High Touch ont été contactés récemment. ✓
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {htNoContact.map((e) => {
+                    const days = daysAgo(e.account.lastInteractionDate!);
+                    return (
+                      <div
+                        key={e.account.id}
+                        className="flex items-center justify-between rounded-xl border border-amber-100 bg-amber-50 px-5 py-3"
+                      >
+                        <div>
+                          <span className="font-semibold text-slate-900">{e.account.name}</span>
+                          <span className="ml-2 text-xs text-slate-400">{e.account.csm}</span>
+                          <div className="mt-0.5 text-xs text-slate-500">{e.suggestedAction}</div>
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <span className="text-sm font-bold text-amber-700">
+                            il y a {days}j
+                          </span>
+                          <button
+                            onClick={() => setSelected(e)}
+                            className="rounded-lg bg-[#f9b494] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#f7a07e]"
+                          >
+                            Détails →
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
+            {/* Résumé bloc LT */}
+            <section>
+              <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-500">
+                📋 Bloc Low Touch du jour
+              </h3>
+              {batchPending.length === 0 ? (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                  Bloc du jour traité. ✓
+                </div>
+              ) : (
+                <div
+                  className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm hover:bg-slate-50"
+                  onClick={() => setTab("lt")}
+                >
+                  <div>
+                    <p className="font-semibold text-slate-900">
+                      {batchPending.length} signal{batchPending.length !== 1 ? "s" : ""} à traiter
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-400">
+                      {batchItems.length - batchPending.length} sur {batchItems.length} traités
+                    </p>
+                  </div>
+                  <span className="text-sm font-semibold text-[#f9b494]">
+                    Ouvrir le bloc →
+                  </span>
+                </div>
+              )}
+            </section>
+
+          </div>
+        )}
+
         {/* HIGH TOUCH */}
         {tab === "ht" && (
           <div className="space-y-4">
+            {/* Toolbar */}
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setFocusHT((v) => !v)}
+                  className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    focusHT
+                      ? "border-amber-400 bg-amber-50 text-amber-700"
+                      : "border-slate-200 bg-white text-slate-500 hover:border-slate-400"
+                  }`}
+                >
+                  🎯 {focusHT ? "Focus urgences actif" : "Focus urgences"}
+                </button>
+                {focusHT && (
+                  <span className="text-xs text-slate-400">
+                    Masque les comptes Sain / Expansion
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={() => exportCSV(htEntries, "high-touch.csv")}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-500 hover:border-slate-400"
+              >
+                ↓ Export CSV
+              </button>
+            </div>
             {/* suggest_low banner */}
             {htEntries.some((e) => e.touchSuggestion === "suggest_low") && (
               <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
@@ -298,7 +540,16 @@ export default function DashboardClient({ allEntries, today }: Props) {
                 — envisager un retour en Low Touch pour libérer de la capacité.
               </div>
             )}
-            <AccountTable entries={htEntries} onSelect={setSelected} />
+            <AccountTable
+              entries={
+                focusHT
+                  ? htEntries.filter(
+                      (e) => e.churnRisk.total >= 40 || e.healthScore < 55
+                    )
+                  : htEntries
+              }
+              onSelect={setSelected}
+            />
           </div>
         )}
 
@@ -415,9 +666,17 @@ export default function DashboardClient({ allEntries, today }: Props) {
         {/* RENOUVELLEMENTS */}
         {tab === "renewals" && (
           <div className="space-y-4">
-            <p className="text-xs text-slate-400">
-              Comptes dont le contrat arrive à échéance dans les 120 prochains jours, triés par urgence.
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-slate-400">
+                Comptes dont le contrat arrive à échéance dans les 120 prochains jours, triés par urgence.
+              </p>
+              <button
+                onClick={() => exportCSV(renewalEntries, "renouvellements.csv")}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-500 hover:border-slate-400 shrink-0"
+              >
+                ↓ Export CSV
+              </button>
+            </div>
             <AccountTable
               entries={[...renewalEntries].sort(
                 (a, b) => a.churnRisk.daysToRenewal - b.churnRisk.daysToRenewal
@@ -430,9 +689,17 @@ export default function DashboardClient({ allEntries, today }: Props) {
         {/* EXPANSION */}
         {tab === "expansion" && (
           <div className="space-y-4">
-            <p className="text-xs text-slate-400">
-              Comptes avec des signaux d&apos;expansion détectés (dépassement de licences, croissance d&apos;usage, crédits IA).
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-slate-400">
+                Comptes avec des signaux d&apos;expansion détectés (dépassement de licences, croissance d&apos;usage, crédits IA).
+              </p>
+              <button
+                onClick={() => exportCSV(expansionEntries, "expansion.csv")}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-500 hover:border-slate-400 shrink-0"
+              >
+                ↓ Export CSV
+              </button>
+            </div>
             <AccountTable
               entries={[...expansionEntries].sort((a, b) => b.account.mrr - a.account.mrr)}
               onSelect={setSelected}

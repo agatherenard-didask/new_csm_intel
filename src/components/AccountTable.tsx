@@ -16,6 +16,7 @@ type SortKey =
   | "churn"
   | "renewal"
   | "meet"
+  | "interaction"
   | "content"
   | "priority";
 
@@ -41,6 +42,17 @@ function healthBar(score: number): string {
   if (score >= 70) return "bg-green-500";
   if (score >= 40) return "bg-amber-500";
   return "bg-red-500";
+}
+
+function daysAgo(isoDate: string | null): number | null {
+  if (!isoDate) return null;
+  return Math.round((Date.now() - new Date(isoDate).getTime()) / 86_400_000);
+}
+
+function interactionColor(days: number): string {
+  if (days <= 7) return "text-emerald-600";
+  if (days <= 30) return "text-amber-600";
+  return "text-red-600";
 }
 
 function churnBar(score: number): string {
@@ -83,6 +95,12 @@ export default function AccountTable({ entries, onSelect }: Props) {
         case "meet":
           cmp = a.account.meet - b.account.meet;
           break;
+        case "interaction": {
+          const da = daysAgo(a.account.lastInteractionDate) ?? 9999;
+          const db = daysAgo(b.account.lastInteractionDate) ?? 9999;
+          cmp = da - db;
+          break;
+        }
         case "content":
           cmp = a.account.contentCreationCount - b.account.contentCreationCount;
           break;
@@ -111,6 +129,7 @@ export default function AccountTable({ entries, onSelect }: Props) {
     { label: "Risque Churn", key: "churn" },
     { label: "Fin de contrat", key: "renewal" },
     { label: "Dernier RDV", key: "meet" },
+    { label: "Dernière interaction", key: "interaction" },
     { label: "Activité création", key: "content" },
     { label: "Statut" },
     { label: "Alertes" },
@@ -255,6 +274,19 @@ export default function AccountTable({ entries, onSelect }: Props) {
                     {a.meet}j
                   </span>
                   <span className="ml-1 text-xs text-slate-400">· seuil {threshold}j</span>
+                </td>
+
+                {/* DERNIÈRE INTERACTION */}
+                <td className="px-4 py-4">
+                  {(() => {
+                    const d = daysAgo(a.lastInteractionDate);
+                    if (d === null) return <span className="text-xs text-slate-300">—</span>;
+                    return (
+                      <span className={`text-sm font-medium ${interactionColor(d)}`}>
+                        il y a {d}j
+                      </span>
+                    );
+                  })()}
                 </td>
 
                 {/* ACTIVITÉ CRÉATION */}
