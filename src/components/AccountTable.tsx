@@ -124,6 +124,7 @@ export default function AccountTable({ entries, onSelect }: Props) {
 
   const headers: { label: string; key?: SortKey }[] = [
     { label: "Client", key: "name" },
+    { label: "NPS" },
     { label: "Tier / Équipe" },
     { label: "Health Score", key: "health" },
     { label: "Risque Churn", key: "churn" },
@@ -183,14 +184,18 @@ export default function AccountTable({ entries, onSelect }: Props) {
               >
                 {/* CLIENT */}
                 <td className="px-4 py-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-base font-bold text-slate-900">{a.name}</span>
-                    {a.nps !== null && (
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${npsStyle(a.nps)}`}>
-                        NPS {a.nps}
-                      </span>
-                    )}
-                  </div>
+                  <span className="text-base font-bold text-slate-900">{a.name}</span>
+                </td>
+
+                {/* NPS */}
+                <td className="px-4 py-4">
+                  {a.nps !== null ? (
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${npsStyle(a.nps)}`}>
+                      {a.nps}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-slate-300">—</span>
+                  )}
                 </td>
 
                 {/* TIER / ÉQUIPE */}
